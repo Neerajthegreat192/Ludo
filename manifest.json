@@ -1,11 +1,18 @@
 {
-  "background_color": "#ffffff",
-  "dir": "ltr",
+  "name": "Ludo Game",
+  "short_name": "Ludo",
+  "description": "Play Ludo Game Online",
+  "start_url": "/Ludo/",
+  "scope": "/Ludo/",
   "display": "standalone",
-  "name": "neerajthegreat192.github",
-  "orientation": "any",
-  "scope": "/",
-  "short_name": "neerajthegreat192.github",
-  "start_url": "/",
-  "theme_color": "#14130f"
+  "background_color": "#ffffff",
+  "theme_color": "#14130f",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/8074/8074788.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }

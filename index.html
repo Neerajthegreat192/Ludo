@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#14130f">
+<title>Ludo — Play Online</title>
+<style>
+:root{
+  --bg:#14130f; --panel:#1e1c17; --panel2:#26231c; --line:#302c23;
+  --accent:#7aa95c; --danger:#e07171; --warn:#e0b545;
+  --text:#ece9e2; --muted:#9b968a;
+  --cr:#e74c3c; --cg:#2ecc71; --cy:#f1c40f; --cb:#3498db;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column}
+[hidden]{display:none !important}
+button{font-family:inherit}
+
+#menu{justify-content:center;align-items:center;padding:20px;gap:12px;overflow-y:auto}
+#menu h1{font-size:32px;margin:0;letter-spacing:1px}
+#menu .sub{color:var(--muted);font-size:13px;margin:0 0 4px}
+
+.nameField{width:100%;max-width:320px;display:flex;flex-direction:column;gap:6px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.nameInput{
+  width:100%;background:var(--panel);border:1px solid var(--line);color:var(--text);
+  border-radius:12px;padding:14px 16px;font-size:16px;outline:none;
+  font-weight:600;text-align:center;
+}
+.nameInput:focus{border-color:var(--accent)}
+
+.countPick{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px}
+.countRow{display:flex;gap:8px}
+.countBtn{
+  flex:1;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:12px 8px;border-radius:12px;font-size:14px;font-weight:600;
+  cursor:pointer;transition:.15s;
+}
+.countBtn.on{background:var(--accent);border-color:var(--accent);color:#0f1a08}
+
+.btn{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:14px 20px;border-radius:12px;font-size:16px;font-weight:600;
+  cursor:pointer;transition:.15s;min-width:200px;
+}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#0f1a08}
+.btn.ghost{min-width:auto;padding:10px 16px;font-size:14px}
+.btn.danger{background:rgba(224,113,113,.15);border-color:var(--danger);color:var(--danger)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+#roomBox{
+  width:100%;max-width:320px;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:18px;text-align:center;display:flex;flex-direction:column;gap:10px;
+}
+.code{
+  font-size:44px;font-weight:800;letter-spacing:10px;color:var(--accent);
+  padding-left:10px;font-family:ui-monospace,Menlo,monospace;
+}
+.divider{display:flex;align-items:center;gap:12px;width:100%;max-width:320px;color:var(--muted);font-size:13px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.joinRow{display:flex;gap:10px;width:100%}
+#codeInput{
+  flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);
+  border-radius:12px;padding:14px;font-size:20px;letter-spacing:6px;text-align:center;
+  text-transform:uppercase;font-family:ui-monospace,Menlo,monospace;outline:none;
+}
+#codeInput:focus{border-color:var(--accent)}
+.joinRow .btn{min-width:auto;padding:14px 22px}
+.status{font-size:13px;color:var(--muted);min-height:18px;text-align:center}
+.status.err{color:var(--danger)}
+.status.ok{color:var(--accent)}
+
+#game{background:var(--bg)}
+.bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 8px;padding-top:calc(6px + env(safe-area-inset-top));
+  gap:6px;flex:0 0 auto;background:var(--panel);border-bottom:1px solid var(--line);
+  overflow-x:auto;overflow-y:hidden;
+}
+.bar.bottom{
+  border-bottom:0;border-top:1px solid var(--line);
+  padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  overflow:visible;
+}
+.plist{display:flex;gap:6px;flex:1 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden}
+.pcard{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 8px;border-radius:10px;
+  background:var(--panel2);border:1px solid var(--line);
+  flex:0 0 auto;min-width:0;max-width:160px;
+  transition:.2s;
+}
+.pcard.turn{
+  border-color:var(--accent);
+  box-shadow:0 0 0 1px var(--accent) inset;
+  background:rgba(122,169,92,.12);
+}
+.pdot{
+  width:14px;height:14px;border-radius:50%;flex:0 0 auto;
+  border:2px solid rgba(255,255,255,.35);
+}
+.pdot.r{background:var(--cr)}
+.pdot.g{background:var(--cg)}
+.pdot.y{background:var(--cy)}
+.pdot.b{background:var(--cb)}
+.pname{
+  color:var(--text);font-weight:700;font-size:12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;
+}
+.pcount{font-size:11px;font-weight:700;color:var(--muted);flex:0 0 auto}
+.statusTag{
+  font-size:9px;font-weight:800;letter-spacing:.5px;
+  padding:2px 5px;border-radius:5px;flex:0 0 auto;
+  text-transform:uppercase;line-height:1;
+}
+.statusTag.online{color:#a8d48a;background:rgba(122,169,92,.18);border:1px solid rgba(122,169,92,.4)}
+.statusTag.offline{color:#f0a0a0;background:rgba(224,113,113,.15);border:1px solid rgba(224,113,113,.4)}
+.codeTag{
+  font-family:ui-monospace,Menlo,monospace;font-size:10px;letter-spacing:1px;
+  font-weight:600;color:#fff;opacity:.85;flex:0 0 auto;
+}
+.iconBtn{
+  background:var(--panel2);border:1px solid var(--line);color:var(--text);
+  width:34px;height:34px;border-radius:9px;font-size:16px;cursor:pointer;
+  display:grid;place-items:center;flex:0 0 auto;padding:0;position:relative;transition:.15s;
+}
+.iconBtn:active{transform:scale(.94)}
+#micBtn.on{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:0 0 0 3px rgba(224,113,113,.25)}
+#speakerBtn.on{background:var(--accent);border-color:var(--accent);color:#0f1a08}
+#micBtn.connecting{background:#5c8dd6;border-color:#5c8dd6;color:#fff;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(92,141,214,.55)}50%{box-shadow:0 0 0 6px rgba(92,141,214,0)}}
+.badge{
+  position:absolute;top:-5px;right:-5px;background:var(--danger);color:#fff;
+  font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;
+  display:grid;place-items:center;padding:0 4px;line-height:1;border:2px solid var(--panel);
+}
+
+/* ============ LUDO BOARD ============ */
+#boardWrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-height:0;padding:4px}
+#ludoBoard{
+  --bs: min(96vw, calc(100vh - 250px));
+  width:var(--bs);height:var(--bs);
+  display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);
+  position:relative;background:#0d0c0a;border-radius:12px;overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,.65), inset 0 0 0 2px #2a2620;
+}
+@supports (height:100dvh){ #ludoBoard{--bs: min(96vw, calc(100dvh - 250px));} }
+
+.lc{
+  position:relative;background:#1a1815;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;
+}
+.lc.empty{background:#141310}
+
+/* Path cells — warm, subtle gradient */
+.lc.path, .lc.safe{
+  background: linear-gradient(135deg, #fbf6e0 0%, #ece2c0 100%);
+  box-shadow: inset 0 0 0 .5px rgba(120,105,60,.18);
+}
+.lc.safe::before{
+  content:"★";
+  color:#c7b370;
+  font-size:calc(var(--bs)/15*.52);
+  line-height:1;
+  position:absolute;
+  text-shadow: 0 1px 0 rgba(255,255,255,.65);
+}
+
+/* Start squares with a chevron */
+.lc.start-r,.lc.start-g,.lc.start-y,.lc.start-b{
+  position:relative;overflow:hidden;
+}
+.lc.start-r{background:linear-gradient(135deg,#ff7a6e 0%,#c0392b 100%)}
+.lc.start-g{background:linear-gradient(135deg,#6fe0a3 0%,#229954 100%)}
+.lc.start-y{background:linear-gradient(135deg,#ffe06b 0%,#b7950b 100%)}
+.lc.start-b{background:linear-gradient(135deg,#74c4ee 0%,#2471a3 100%)}
+.lc.start-r::after,.lc.start-g::after,.lc.start-y::after,.lc.start-b::after{
+  content:"▲";position:absolute;color:rgba(255,255,255,.85);
+  font-size:calc(var(--bs)/15*.55);line-height:1;
+  text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+
+/* Home columns */
+.lc.home-r{background:linear-gradient(135deg,#ffd0ca 0%,#f5b7b1 100%);box-shadow:inset 0 0 0 .5px rgba(120,60,50,.18)}
+.lc.home-g{background:linear-gradient(135deg,#ccf3da 0%,#abebc6 100%);box-shadow:inset 0 0 0 .5px rgba(50,120,80,.18)}
+.lc.home-y{background:linear-gradient(135deg,#fbeec0 0%,#f9e79f 100%);box-shadow:inset 0 0 0 .5px rgba(120,100,30,.18)}
+.lc.home-b{background:linear-gradient(135deg,#c8e4f5 0%,#aed6f1 100%);box-shadow:inset 0 0 0 .5px rgba(50,90,120,.18)}
+
+/* Yards — gradient corners */
+.lc.yard-r{background:linear-gradient(135deg,#ff7a6e 0%,#a0291e 100%)}
+.lc.yard-g{background:linear-gradient(135deg,#6fe0a3 0%,#1e8f4e 100%)}
+.lc.yard-y{background:linear-gradient(135deg,#ffe06b 0%,#a88908 100%)}
+.lc.yard-b{background:linear-gradient(135deg,#74c4ee 0%,#1a5986 100%)}
+
+/* Yard slots — glossy circles */
+.lc.slot-r::before,.lc.slot-g::before,.lc.slot-y::before,.lc.slot-b::before{
+  content:"";
+  width:58%;height:58%;border-radius:50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), rgba(255,255,255,.15) 60%, rgba(0,0,0,.15));
+  border:2px solid rgba(255,255,255,.65);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.25), 0 1px 2px rgba(255,255,255,.25);
+}
+
+/* Center home triangles (properly aligned by colour) */
+.center-home{
+  position:absolute;
+  left:calc(100% * 6 / 15); top:calc(100% * 6 / 15);
+  width:calc(100% * 3 / 15); height:calc(100% * 3 / 15);
+  pointer-events:none;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,.45));
+}
+.ctri{ position:absolute; inset:0; }
+.ctri.top{
+  background: linear-gradient(to bottom, #ff8579, #c0392b);
+  clip-path: polygon(0 0, 100% 0, 50% 50%);
+}
+.ctri.right{
+  background: linear-gradient(to left, #6fe0a3, #229954);
+  clip-path: polygon(100% 0, 100% 100%, 50% 50%);
+}
+.ctri.bottom{
+  background: linear-gradient(to top, #ffe06b, #b7950b);
+  clip-path: polygon(0 100%, 100% 100%, 50% 50%);
+}
+.ctri.left{
+  background: linear-gradient(to right, #74c4ee, #2471a3);
+  clip-path: polygon(0 0, 0 100%, 50% 50%);
+}
+
+/* Tokens */
+.tk{
+  position:absolute;
+  border-radius:50%;
+  z-index:5;
+  pointer-events:none;
+  border:2px solid rgba(0,0,0,.45);
+  box-shadow: 0 2px 4px rgba(0,0,0,.55), inset 0 -3px 4px rgba(0,0,0,.22), inset 0 2px 3px rgba(255,255,255,.35);
+  transition: top .18s ease, left .18s ease;
+  will-change: top, left;
+}
+.tk::after{
+  content:"";
+  position:absolute;
+  top:14%; left:22%;
+  width:32%; height:26%;
+  border-radius:50%;
+  background: radial-gradient(ellipse at center, rgba(255,255,255,.9), rgba(255,255,255,0) 72%);
+  pointer-events:none;
+}
+.tk.r{ background: radial-gradient(circle at 35% 28%, #ff9082 0%, #e74c3c 50%, #8e2218 100%); }
+.tk.g{ background: radial-gradient(circle at 35% 28%, #a8f0c4 0%, #2ecc71 50%, #16783f 100%); }
+.tk.y{ background: radial-gradient(circle at 35% 28%, #fdee8a 0%, #f1c40f 50%, #8a700a 100%); }
+.tk.b{ background: radial-gradient(circle at 35% 28%, #a6d4f5 0%, #3498db 50%, #154e78 100%); }
+
+.tk.movable{
+  cursor:pointer;
+  pointer-events:auto;
+  z-index:10;
+  animation: tkpulse 1.05s ease-in-out infinite;
+}
+.tk.movable::before{
+  content:"";
+  position:absolute;
+  inset:-32%;                       /* bigger invisible tap target */
+  border-radius:50%;
+  pointer-events:auto;
+}
+@keyframes tkpulse{
+  0%,100%{ box-shadow: 0 2px 4px rgba(0,0,0,.55), inset 0 -3px 4px rgba(0,0,0,.22), inset 0 2px 3px rgba(255,255,255,.35), 0 0 0 0 rgba(255,255,255,.95); }
+  50%    { box-shadow: 0 2px 4px rgba(0,0,0,.55), inset 0 -3px 4px rgba(0,0,0,.22), inset 0 2px 3px rgba(255,255,255,.35), 0 0 0 6px rgba(255,255,255,0); }
+}
+
+/* ============ DICE / STATUS ============ */
+.diceBar{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:6px 12px;background:var(--panel);border-top:1px solid var(--line);
+  flex:0 0 auto;
+}
+.turnLabel{
+  font-size:13px;font-weight:700;color:var(--muted);
+  flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.turnLabel.active{color:var(--accent)}
+.diceBox{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--panel2);border:1px solid var(--line);
+  display:grid;place-items:center;
+  font-size:22px;font-weight:800;
+  color:var(--text);
+  transition:.15s;
+  flex:0 0 auto;
+}
+.diceBox.rolling{animation:roll .4s ease-out}
+@keyframes roll{0%{transform:rotate(0)}25%{transform:rotate(180deg) scale(1.15)}50%{transform:rotate(360deg)}75%{transform:rotate(540deg) scale(1.15)}100%{transform:rotate(720deg)}}
+.diceBox.hot{border-color:var(--accent);box-shadow:0 0 0 2px rgba(122,169,92,.35)}
+#rollBtn{
+  padding:10px 18px;font-size:14px;font-weight:700;
+  border-radius:10px;min-width:auto;cursor:pointer;border:1px solid var(--accent);
+  background:var(--accent);color:#0f1a08;transition:.15s;
+}
+#rollBtn:disabled{opacity:.35;cursor:not-allowed;background:var(--panel2);border-color:var(--line);color:var(--muted)}
+#rollBtn:active:not(:disabled){transform:scale(.95)}
+
+#statusLine{font-size:12px;font-weight:600;color:var(--text);flex:1 1 auto;text-align:center;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#statusLine.dim{color:var(--muted);font-weight:500}
+
+/* Overlays */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:60;
+  display:flex;align-items:center;justify-content:center;padding:24px;
+  backdrop-filter:blur(3px);animation:fade .15s ease-out;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.dialog{
+  background:var(--panel);border:1px solid var(--line);border-radius:18px;
+  padding:22px;max-width:340px;width:100%;
+  display:flex;flex-direction:column;gap:14px;
+  animation:pop .18s ease-out;box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.dialog h3{margin:0;font-size:19px;letter-spacing:.3px}
+.dialog p{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.dialog .actions{display:flex;gap:10px;margin-top:4px}
+.dialog .actions .btn{flex:1;min-width:0;padding:12px 14px;font-size:14px}
+
+#sheet .dialog{gap:6px;padding:14px}
+.sheetBtn{
+  display:flex;align-items:center;gap:12px;
+  background:transparent;border:0;color:var(--text);
+  padding:14px 12px;border-radius:12px;font-size:16px;font-weight:600;
+  cursor:pointer;text-align:left;width:100%;
+}
+.sheetBtn:active{background:var(--panel2)}
+.sheetBtn .ic{font-size:20px;width:24px;text-align:center}
+.sheetBtn.danger{color:var(--danger)}
+
+#chat .dialog{padding:0;max-width:420px;width:100%;height:min(72vh,540px);display:flex;flex-direction:column;overflow:hidden;gap:0}
+.chatHead{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line);flex:0 0 auto}
+.chatHead h3{margin:0;font-size:16px;letter-spacing:.3px}
+.chatList{flex:1 1 auto;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.chatMsg{display:flex;flex-direction:column;gap:3px;max-width:82%}
+.chatMsg .who{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;opacity:.85}
+.chatMsg.me{align-self:flex-end;align-items:flex-end}
+.chatMsg.them{align-self:flex-start;align-items:flex-start}
+.chatMsg .who.me{color:var(--accent)}
+.chatMsg .who.them{color:var(--warn)}
+.chatMsg .bubble{padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.35;word-break:break-word;white-space:pre-wrap}
+.chatMsg.me .bubble{background:var(--accent);color:#0f1a08;border-bottom-right-radius:4px}
+.chatMsg.them .bubble{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-bottom-left-radius:4px}
+.chatEmpty{color:var(--muted);text-align:center;font-size:13px;padding:28px 12px}
+.chatInput{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex:0 0 auto;background:var(--panel)}
+.chatInput input{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:10px 12px;font-size:15px;outline:none}
+.chatInput input:focus{border-color:var(--accent)}
+.chatInput .btn{padding:10px 16px;font-size:14px;min-width:auto}
+
+#over .dialog{text-align:center;align-items:center}
+#over .bigGlyph{font-size:56px;line-height:1}
+#over .result{font-size:22px;font-weight:800;letter-spacing:.5px}
+#over .reason{color:var(--muted);font-size:14px}
+
+#toast{
+  position:fixed;top:calc(12px + env(safe-area-inset-top));
+  left:50%;transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--line);
+  padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;
+  z-index:80;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  opacity:0;transition:opacity .25s, transform .25s;pointer-events:none;
+  max-width:90vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.hide{transform:translateX(-50%) translateY(-8px)}
+
+.debug{font-family:ui-monospace,Menlo,monospace;font-size:9px;color:#555;position:fixed;bottom:2px;left:4px;right:4px;text-align:center;pointer-events:none;z-index:99}
+#remoteAudio{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- ================= MENU ================= -->
+<div id="menu" class="screen">
+  <h1>🎲 Ludo</h1>
+  <p class="sub">Play with friends on other phones</p>
+
+  <div class="nameField">
+    <label class="label" for="nameInput">Your name</label>
+    <input id="nameInput" class="nameInput" maxlength="14" placeholder="Enter your name"
+           autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+
+  <div id="playActions" style="display:flex;flex-direction:column;gap:14px;align-items:center;width:100%;max-width:320px">
+    <div class="countPick">
+      <label class="label" style="text-align:left;padding-left:4px">Players (creator only)</label>
+      <div class="countRow">
+        <button class="countBtn" data-count="2">2P</button>
+        <button class="countBtn" data-count="3">3P</button>
+        <button class="countBtn on" data-count="4">4P</button>
+      </div>
+    </div>
+
+    <button id="createBtn" class="btn primary" style="width:100%">Create Game</button>
+    <div class="divider"><span>or</span></div>
+    <div class="joinRow">
+      <input id="codeInput" maxlength="4" placeholder="CODE" autocapitalize="characters"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+      <button id="joinBtn" class="btn primary">Join</button>
+    </div>
+  </div>
+
+  <div id="roomBox" hidden>
+    <div class="label">Room code</div>
+    <div id="roomCode" class="code">----</div>
+    <button id="shareBtn" class="btn ghost">Share Link</button>
+    <div id="hostStatus" class="status">Waiting for players…</div>
+    <button id="cancelRoomBtn" class="btn ghost danger" style="border-color:var(--danger)">Cancel Room</button>
+  </div>
+
+  <div id="menuStatus" class="status"></div>
+  <button id="resumeBtn" class="btn ghost" hidden>Resume last game</button>
+</div>
+
+<!-- ================= GAME ================= -->
+<div id="game" class="screen" hidden>
+  <div class="bar top">
+    <div class="plist" id="playerList"></div>
+    <span class="codeTag" id="codeTag">----</span>
+    <button class="iconBtn" id="micBtn" title="Tap to talk">🎤</button>
+    <button class="iconBtn on" id="speakerBtn" title="Speaker">🔊</button>
+    <button class="iconBtn" id="chatBtn" title="Chat">💬<span id="chatBadge" class="badge" hidden>0</span></button>
+    <button class="iconBtn" id="menuBtn" title="Menu">☰</button>
+  </div>
+
+  <div id="boardWrap"><div id="ludoBoard"></div></div>
+
+  <div class="diceBar">
+    <div class="turnLabel" id="turnLabel">Waiting…</div>
+    <div class="diceBox" id="diceBox">🎲</div>
+    <button id="rollBtn" disabled>Roll</button>
+  </div>
+
+  <div class="bar bottom">
+    <div class="plist" id="myBar"></div>
+    <div id="statusLine">Waiting…</div>
+  </div>
+</div>
+
+<!-- ================= OVERLAYS ================= -->
+<div id="confirm" class="overlay" hidden><div class="dialog" id="confirmDialog"></div></div>
+<div id="sheet" class="overlay" hidden><div class="dialog" id="sheetDialog"></div></div>
+
+<div id="chat" class="overlay" hidden>
+  <div class="dialog">
+    <div class="chatHead">
+      <h3>💬 Chat</h3>
+      <button class="iconBtn" id="chatClose" title="Close">✖</button>
+    </div>
+    <div class="chatList" id="chatList"></div>
+    <div class="chatInput">
+      <input id="chatText" maxlength="200" placeholder="Type a message…"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+      <button id="chatSend" class="btn primary">Send</button>
+    </div>
+  </div>
+</div>
+
+<div id="over" class="overlay" hidden><div class="dialog" id="overDialog"></div></div>
+
+<audio id="remoteAudio" autoplay playsinline></audio>
+
+<div id="toast"></div>
+<div class="debug" id="debug"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getDatabase, ref, set, get, update, onValue, onDisconnect, remove, serverTimestamp, push, onChildAdded
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* =========================================================
+   FIREBASE
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyBg1VC0cd1FmGiXTkMvFFG-eSL46FmgtZU",
+  authDomain: "chess-e4910.firebaseapp.com",
+  databaseURL: "https://chess-e4910-default-rtdb.firebaseio.com",
+  projectId: "chess-e4910",
+  storageBucket: "chess-e4910.firebasestorage.app",
+  messagingSenderId: "62635884266",
+  appId: "1:62635884266:web:0375748951994b26cb2193",
+  measurementId: "G-WPMMGH247F"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const SimplePeer = window.SimplePeer;
+
+/* =========================================================
+   LUDO CONSTANTS
+   ========================================================= */
+const LOOP = [
+  [6,1],[6,2],[6,3],[6,4],[6,5],
+  [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],
+  [0,7],
+  [0,8],[1,8],[2,8],[3,8],[4,8],[5,8],
+  [6,9],[6,10],[6,11],[6,12],[6,13],
+  [6,14],[7,14],[8,14],
+  [8,13],[8,12],[8,11],[8,10],[8,9],
+  [9,8],[10,8],[11,8],[12,8],[13,8],[14,8],
+  [14,7],
+  [14,6],[13,6],[12,6],[11,6],[10,6],[9,6],
+  [8,5],[8,4],[8,3],[8,2],[8,1],
+  [8,0],[7,0],[6,0]
+];
+const SAFE_IDX = [0, 8, 13, 21, 26, 34, 39, 47];
+const START_IDX = { r: 0, g: 13, y: 26, b: 39 };
+const HOME_COL = {
+  r: [[7,1],[7,2],[7,3],[7,4],[7,5]],
+  g: [[1,7],[2,7],[3,7],[4,7],[5,7]],
+  y: [[7,13],[7,12],[7,11],[7,10],[7,9]],
+  b: [[13,7],[12,7],[11,7],[10,7],[9,7]]
+};
+const HOME_POS = { r: [7,6], g: [6,7], y: [7,8], b: [8,7] };
+const YARD_POS = {
+  r: [[1,1],[1,4],[4,1],[4,4]],
+  g: [[1,10],[1,13],[4,10],[4,13]],
+  y: [[10,10],[10,13],[13,10],[13,13]],
+  b: [[10,1],[10,4],[13,1],[13,4]]
+};
+const COLOR_HEX = { r: '#e74c3c', g: '#2ecc71', y: '#f1c40f', b: '#3498db' };
+const COLOR_NAME = { r: 'Red', g: 'Green', y: 'Yellow', b: 'Blue' };
+
+function positionOf(color, rel){
+  if (rel < 0) return null;
+  if (rel <= 50){
+    const idx = (START_IDX[color] + rel) % 52;
+    return LOOP[idx];
+  }
+  if (rel <= 55) return HOME_COL[color][rel - 51];
+  return HOME_POS[color];
+}
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let roomCode = '';
+let myName = '';
+let chosenCount = 4;
+let myColor = '';
+
+let state = null;
+let activeColors = [];
+let players = {};
+let gameOver = false;
+let lastRoomSnapshot = null;
+let lastResultKey = '';
+
+let roomUnsub = null;
+let connectedUnsub = null;
+let isConnected = false;
+let hasEnteredGame = false;
+
+/* Chat */
+let chatUnsub = null;
+let chatMessages = [];
+let chatOpen = false;
+let chatUnread = 0;
+let chatLastSeenTs = 0;
+let lastChatMsgId = '';
+
+/* Voice */
+let voicePeer = null;
+let voiceConnected = false;
+let localStream = null;
+let micOn = false;
+let speakerOn = true;
+let voiceSignalUnsub = null;
+let voiceSetupDone = false;
+let voiceStreamAdded = false;
+let micRequesting = false;
+
+const $ = id => document.getElementById(id);
+
+function dbg(t){ const d = $('debug'); if (d) d.textContent = t; }
+
+let toastTimer = null;
+function toast(msg, ms){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show'); t.classList.remove('hide');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.classList.remove('show'); t.classList.add('hide'); }, ms||2200);
+}
+
+function makeCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i=0;i<4;i++) s += chars[Math.floor(Math.random()*chars.length)];
+  return s;
+}
+function setMenuStatus(text, cls){
+  $('menuStatus').textContent = text || '';
+  $('menuStatus').className = 'status' + (cls ? ' ' + cls : '');
+}
+
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+/* Defensive: Firebase sometimes hands back token arrays as objects.
+   Always normalise to a real 4-element number array. */
+function normalizeTokens(arr){
+  const out = [-1,-1,-1,-1];
+  if (Array.isArray(arr)){
+    for (let i=0;i<4;i++){
+      const v = arr[i];
+      if (typeof v === 'number') out[i] = v;
+      else if (v === null || v === undefined) out[i] = -1;
+      else if (!isNaN(parseInt(v,10))) out[i] = parseInt(v,10);
+    }
+  } else if (arr && typeof arr === 'object'){
+    for (let i=0;i<4;i++){
+      const v = arr[i];
+      if (typeof v === 'number') out[i] = v;
+      else if (v === null || v === undefined) out[i] = -1;
+      else if (!isNaN(parseInt(v,10))) out[i] = parseInt(v,10);
+    }
+  }
+  return out;
+}
+function normalizeState(s){
+  if (!s) return null;
+  const tokens = {};
+  for (const c of ['r','g','y','b']){
+    tokens[c] = normalizeTokens(s.tokens && s.tokens[c]);
+  }
+  return {
+    tokens,
+    turn: s.turn || 'r',
+    dice: (typeof s.dice === 'number') ? s.dice : null,
+    phase: s.phase || 'roll',
+    consecutiveSixes: s.consecutiveSixes || 0,
+    finished: Array.isArray(s.finished) ? s.finished.slice() : [],
+    gameOver: !!s.gameOver,
+    winner: s.winner || null,
+    lastMove: s.lastMove || null
+  };
+}
+
+/* =========================================================
+   SOUND
+   ========================================================= */
+let audioCtx = null;
+function ensureAudio(){
+  if (!audioCtx){ try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+}
+function beep(freq, dur, type, vol){
+  if (!audioCtx) return;
+  try {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type || 'sine';
+    o.frequency.value = freq;
+    g.gain.value = vol == null ? 0.08 : vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    const t = audioCtx.currentTime;
+    g.gain.setValueAtTime(g.gain.value, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.start(t); o.stop(t + dur + 0.02);
+  } catch(e){}
+}
+const SFX = {
+  dice:    () => { beep(660,0.05,'square',0.05); setTimeout(()=>beep(880,0.05,'square',0.05),60); },
+  move:    () => beep(520, 0.06, 'triangle', 0.05),
+  capture: () => { beep(300,0.10,'square',0.06); setTimeout(()=>beep(200,0.12,'square',0.05), 50); },
+  home:    () => { [523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,0.12,'sine',0.08), i*80)); },
+  win:     () => { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'sine',0.09), i*100)); },
+  lose:    () => { [400,300,220,160].forEach((f,i)=>setTimeout(()=>beep(f,0.16,'sine',0.09), i*130)); },
+  notify:  () => beep(660, 0.10, 'sine', 0.07)
+};
+
+/* =========================================================
+   FIREBASE PATHS
+   ========================================================= */
+function roomPath(){ return `ludo_game/rooms/${roomCode}`; }
+function myPresencePath(){ return `${roomPath()}/players/${myColor}`; }
+function chatPath(){ return `${roomPath()}/chat`; }
+function voiceSignalPath(color){ return `${roomPath()}/voice/signal/${color}`; }
+
+async function updateRoom(data){
+  if (!roomCode) return;
+  try { await update(ref(db, roomPath()), data); }
+  catch(e){ dbg('update err: ' + e.message); }
+}
+async function readRoom(){
+  if (!roomCode) return null;
+  try {
+    const snap = await get(ref(db, roomPath()));
+    return snap.exists() ? snap.val() : null;
+  } catch(e){ dbg('read err: ' + e.message); return null; }
+}
+
+/* =========================================================
+   CONNECTIVITY
+   ========================================================= */
+function setupConnectivity(){
+  if (connectedUnsub) connectedUnsub();
+  const connRef = ref(db, '.info/connected');
+  connectedUnsub = onValue(connRef, (snap) => {
+    isConnected = snap.val() === true;
+    if (isConnected && roomCode){
+      const myRef = ref(db, myPresencePath());
+      onDisconnect(myRef).update({ online: false, lastSeen: serverTimestamp() });
+      update(myRef, { online: true, lastSeen: Date.now(), name: myName }).catch(()=>{});
+    }
+  });
+}
+
+/* =========================================================
+   LUDO INITIAL STATE
+   ========================================================= */
+function initialState(colors){
+  const tokens = {};
+  for (const c of ['r','g','y','b']) tokens[c] = [-1,-1,-1,-1];
+  return {
+    tokens,
+    turn: colors[0],
+    dice: null,
+    phase: 'roll',
+    consecutiveSixes: 0,
+    finished: [],
+    gameOver: false,
+    winner: null,
+    lastMove: null
+  };
+}
+
+/* =========================================================
+   CREATE / JOIN
+   ========================================================= */
+function colorsForCount(n){
+  if (n === 2) return ['r','y'];
+  if (n === 3) return ['r','g','y'];
+  return ['r','g','y','b'];
+}
+
+async function createRoom(){
+  ensureAudio();
+  const name = $('nameInput').value.trim();
+  if (!name){ setMenuStatus('Please enter your name first.', 'err'); $('nameInput').focus(); return; }
+  myName = name.slice(0,14);
+
+  roomCode = makeCode();
+  myColor = '';
+  hasEnteredGame = false;
+  lastRoomSnapshot = null;
+  lastResultKey = '';
+  resetChatState();
+  resetVoiceState();
+
+  const colors = colorsForCount(chosenCount);
+
+  const roomData = {
+    createdAt: Date.now(),
+    playerCount: chosenCount,
+    activeColors: colors,
+    state: initialState(colors),
+    players: { r: null, g: null, y: null, b: null },
+    v: 2
+  };
+  roomData.players[colors[0]] = { name: myName, online: true, lastSeen: Date.now() };
+  myColor = colors[0];
+
+  try {
+    await set(ref(db, roomPath()), roomData);
+  } catch(e){
+    setMenuStatus('Could not create room. Check your internet.', 'err');
+    return;
+  }
+
+  saveSession();
+  setMenuStatus('');
+
+  $('roomCode').textContent = roomCode;
+  $('roomBox').hidden = false;
+  $('playActions').hidden = true;
+  $('nameInput').disabled = true;
+  $('hostStatus').textContent = `Waiting for players (1/${chosenCount})…`;
+  $('hostStatus').className = 'status ok';
+
+  setupConnectivity();
+  attachRoomListener();
+  attachChatListener();
+}
+
+async function joinRoom(code){
+  ensureAudio();
+  const name = $('nameInput').value.trim();
+  if (!name){ setMenuStatus('Please enter your name first.', 'err'); $('nameInput').focus(); return; }
+  myName = name.slice(0,14);
+
+  const snap = await get(ref(db, `ludo_game/rooms/${code}`));
+  if (!snap.exists()){ setMenuStatus('Room not found.', 'err'); return; }
+  const room = snap.val();
+  const players = room.players || {};
+  const activeColors = room.activeColors || ['r','g','y','b'];
+
+  let targetColor = null;
+  for (const c of activeColors){
+    const p = players[c];
+    if (!p) { targetColor = c; break; }
+    if (!p.online && room.state && room.state.gameOver) { targetColor = c; break; }
+  }
+  if (!targetColor){ setMenuStatus('Room is full.', 'err'); return; }
+
+  roomCode = code;
+  myColor = targetColor;
+  hasEnteredGame = false;
+  lastRoomSnapshot = null;
+  lastResultKey = '';
+  resetChatState();
+  resetVoiceState();
+
+  try {
+    await update(ref(db, roomPath()), {
+      [`players/${targetColor}`]: { name: myName, online: true, lastSeen: Date.now() }
+    });
+  } catch(e){
+    setMenuStatus('Could not join.', 'err');
+    return;
+  }
+
+  saveSession();
+  setMenuStatus('');
+  setupConnectivity();
+  attachRoomListener();
+  attachChatListener();
+}
+
+/* =========================================================
+   ROOM LISTENER
+   ========================================================= */
+function attachRoomListener(){
+  if (roomUnsub) roomUnsub();
+  roomUnsub = onValue(ref(db, roomPath()), (snap) => {
+    const room = snap.val();
+    if (!room){
+      if (hasEnteredGame){ toast('Room closed'); leaveToMenu(true); }
+      return;
+    }
+    lastRoomSnapshot = room;
+    players = room.players || {};
+    activeColors = room.activeColors || ['r','g','y','b'];
+
+    const filled = activeColors.filter(c => players[c]).length;
+    const allFilled = filled === activeColors.length;
+
+    if (!allFilled){
+      if (!hasEnteredGame){
+        $('hostStatus').textContent = `Waiting for players (${filled}/${activeColors.length})…`;
+        $('hostStatus').className = 'status ok';
+      }
+      return;
+    }
+
+    if (!hasEnteredGame){
+      hasEnteredGame = true;
+      state = normalizeState(room.state);
+      gameOver = !!state.gameOver;
+      showGameScreen();
+    } else {
+      state = normalizeState(room.state);
+      const wasOver = gameOver;
+      gameOver = !!state.gameOver;
+      render();
+      if (gameOver && !wasOver){
+        const key = 'over-' + (state.winner || '?');
+        if (lastResultKey !== key){
+          lastResultKey = key;
+          showResult();
+        }
+      }
+      if (!gameOver) lastResultKey = '';
+    }
+  });
+}
+
+/* =========================================================
+   GAME SCREEN
+   ========================================================= */
+function showGameScreen(){
+  $('menu').hidden = true;
+  $('game').hidden = false;
+  renderBoard();
+  render();
+  // Re-render after layout has settled (fixes iOS first-paint sizing)
+  requestAnimationFrame(() => render());
+  updateChatBadge();
+  updateVoiceButtons();
+  setupVoicePeer();
+}
+
+/* =========================================================
+   BOARD RENDER
+   ========================================================= */
+function cellClass(r, c){
+  if (r < 6 && c < 6) return slotOrYard('r', r, c);
+  if (r < 6 && c > 8) return slotOrYard('g', r, c);
+  if (r > 8 && c > 8) return slotOrYard('y', r, c);
+  if (r > 8 && c < 6) return slotOrYard('b', r, c);
+  if (r >= 6 && r <= 8 && c >= 6 && c <= 8) return 'empty';
+
+  for (const color of ['r','g','y','b']){
+    for (const [hr,hc] of HOME_COL[color]){
+      if (hr === r && hc === c) return 'home-' + color;
+    }
+  }
+
+  if (r === 6 && c === 1) return 'start-r';
+  if (r === 1 && c === 8) return 'start-g';
+  if (r === 8 && c === 13) return 'start-y';
+  if (r === 13 && c === 6) return 'start-b';
+
+  for (let i=0; i<LOOP.length; i++){
+    if (LOOP[i][0] === r && LOOP[i][1] === c){
+      return SAFE_IDX.includes(i) ? 'safe' : 'path';
+    }
+  }
+  return 'empty';
+}
+function slotOrYard(color, r, c){
+  const isSlot = YARD_POS[color].some(([sr,sc]) => sr === r && sc === c);
+  return isSlot ? ('yard-' + color + ' slot-' + color) : ('yard-' + color);
+}
+
+function renderBoard(){
+  const board = $('ludoBoard');
+  board.innerHTML = '';
+  for (let r=0; r<15; r++){
+    for (let c=0; c<15; c++){
+      const cell = document.createElement('div');
+      cell.className = 'lc ' + cellClass(r, c);
+      board.appendChild(cell);
+    }
+  }
+  // 4 properly-aligned triangles in the center
+  const center = document.createElement('div');
+  center.className = 'center-home';
+  center.innerHTML =
+    '<div class="ctri top"></div>' +
+    '<div class="ctri right"></div>' +
+    '<div class="ctri bottom"></div>' +
+    '<div class="ctri left"></div>';
+  board.appendChild(center);
+}
+
+/* =========================================================
+   RENDER TOKENS
+   ========================================================= */
+function render(){
+  if (!state) return;
+  renderTokens();
+  renderPlayerBars();
+  renderDiceBar();
+  renderStatus();
+}
+
+function cellSizePx(){
+  const board = $('ludoBoard');
+  const rect = board.getBoundingClientRect();
+  return rect.width / 15;
+}
+
+function isTokenMovable(color, idx){
+  if (!state) return false;
+  if (color !== myColor) return false;
+  if (state.turn !== myColor) return false;
+  if (state.phase !== 'move') return false;
+  const d = state.dice;
+  if (!d) return false;
+  return canMove(color, idx, d);
+}
+
+function renderTokens(){
+  const board = $('ludoBoard');
+  board.querySelectorAll('.tk').forEach(el => el.remove());
+
+  const cellPx = cellSizePx();
+  if (cellPx <= 0) return;
+
+  // Group by destination cell
+  const byCell = {};
+  for (const color of activeColors){
+    const arr = normalizeTokens(state.tokens[color]);
+    for (let i=0; i<4; i++){
+      const rel = arr[i];
+      const pos = (rel < 0) ? YARD_POS[color][i] : positionOf(color, rel);
+      if (!pos) continue;
+      const key = pos[0] + '_' + pos[1];
+      if (!byCell[key]) byCell[key] = { r: pos[0], c: pos[1], list: [] };
+      byCell[key].list.push({ color, idx: i });
+    }
+  }
+
+  for (const key in byCell){
+    const g = byCell[key];
+    const n = g.list.length;
+    const slots =
+      n === 1 ? [[0.5, 0.5]] :
+      n === 2 ? [[0.30, 0.5], [0.70, 0.5]] :
+      n === 3 ? [[0.28, 0.30], [0.72, 0.30], [0.5, 0.72]] :
+                [[0.28, 0.28], [0.72, 0.28], [0.28, 0.72], [0.72, 0.72]];
+    const size = cellPx * (n === 1 ? 0.72 : 0.44);
+
+    for (let k=0; k<n; k++){
+      const tk = g.list[k];
+      const slot = slots[k] || [0.5, 0.5];
+      const el = document.createElement('div');
+      el.className = 'tk ' + tk.color;
+
+      const cx = (g.c + slot[0]) * cellPx;
+      const cy = (g.r + slot[1]) * cellPx;
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.left = (cx - size/2) + 'px';
+      el.style.top  = (cy - size/2) + 'px';
+
+      if (isTokenMovable(tk.color, tk.idx)){
+        el.classList.add('movable');
+        el.onclick = (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          tryMove(tk.idx);
+        };
+        // Belt and braces: also catch touchstart for older iOS
+        el.ontouchstart = (ev) => {
+          ev.stopPropagation();
+        };
+      }
+
+      board.appendChild(el);
+    }
+  }
+}
+
+/* =========================================================
+   MOVE LOGIC
+   ========================================================= */
+function absLoopIdx(color, rel){
+  return (START_IDX[color] + rel) % 52;
+}
+function canMove(color, tokenIdx, roll){
+  if (!state) return false;
+  const arr = normalizeTokens(state.tokens[color]);
+  const rel = arr[tokenIdx];
+  if (rel === 56) return false;
+  if (rel === -1){
+    if (roll !== 6) return false;
+    return true;
+  }
+  const newRel = rel + roll;
+  if (newRel > 56) return false;
+  return true;
+}
+function anyMovable(color, roll){
+  for (let i=0; i<4; i++) if (canMove(color, i, roll)) return true;
+  return false;
+}
+
+async function rollDice(){
+  if (!state) return;
+  if (state.turn !== myColor) return;
+  if (state.phase !== 'roll') return;
+  if (state.gameOver) return;
+
+  const roll = 1 + Math.floor(Math.random() * 6);
+  SFX.dice();
+
+  const box = $('diceBox');
+  if (box){
+    box.classList.add('rolling');
+    setTimeout(() => box.classList.remove('rolling'), 400);
+  }
+
+  const newSixes = roll === 6 ? (state.consecutiveSixes + 1) : 0;
+
+  if (roll === 6 && newSixes >= 3){
+    await updateRoom({
+      'state/dice': null,
+      'state/consecutiveSixes': 0,
+      'state/phase': 'roll',
+      'state/turn': nextColor(state.turn),
+      'state/lastMove': { color: state.turn, skip: 'triple-six' }
+    });
+    return;
+  }
+
+  const movable = anyMovable(state.turn, roll);
+
+  await updateRoom({
+    'state/dice': roll,
+    'state/consecutiveSixes': newSixes,
+    'state/phase': movable ? 'move' : 'roll'
+  });
+
+  if (!movable){
+    setTimeout(async () => {
+      const room = await readRoom();
+      if (!room || !room.state) return;
+      if (room.state.turn !== myColor) return;
+      if (room.state.phase !== 'roll') return;
+      if (room.state.dice !== roll) return;
+      await updateRoom({
+        'state/turn': nextColor(state.turn),
+        'state/dice': null,
+        'state/consecutiveSixes': 0,
+        'state/phase': 'roll',
+        'state/lastMove': { color: myColor, skip: 'no-move' }
+      });
+    }, 1200);
+  }
+}
+
+function nextColor(current){
+  const idx = activeColors.indexOf(current);
+  if (idx < 0) return activeColors[0];
+  return activeColors[(idx + 1) % activeColors.length];
+}
+
+async function tryMove(tokenIdx){
+  try {
+    if (!state) return;
+    if (state.turn !== myColor) return;
+    if (state.phase !== 'move') return;
+    const roll = state.dice;
+    if (!roll) return;
+    if (!canMove(myColor, tokenIdx, roll)) return;
+
+    const arr = normalizeTokens(state.tokens[myColor]);
+    const currentRel = arr[tokenIdx];
+    let newRel = currentRel === -1 ? 0 : currentRel + roll;
+
+    // Build new token map
+    const newTokens = {};
+    for (const c of ['r','g','y','b']){
+      newTokens[c] = normalizeTokens(state.tokens[c]);
+    }
+    newTokens[myColor][tokenIdx] = newRel;
+
+    // Capture check
+    let captured = 0;
+    if (newRel >= 0 && newRel <= 50){
+      const myIdx = absLoopIdx(myColor, newRel);
+      const isSafe = SAFE_IDX.includes(myIdx);
+      if (!isSafe){
+        for (const oc of activeColors){
+          if (oc === myColor) continue;
+          for (let j=0; j<4; j++){
+            const orel = newTokens[oc][j];
+            if (orel < 0 || orel > 50) continue;
+            if (absLoopIdx(oc, orel) === myIdx){
+              newTokens[oc][j] = -1;
+              captured++;
+            }
+          }
+        }
+      }
+    }
+
+    const reachedHome = (newRel === 56);
+    const allHome = newTokens[myColor].every(r => r === 56);
+    const extra = (roll === 6) || (captured > 0);
+
+    let newFinished = state.finished.slice();
+    if (allHome && !newFinished.includes(myColor)) newFinished.push(myColor);
+
+    let newTurn = myColor;
+    let newSixes = state.consecutiveSixes;
+    if (allHome){
+      newTurn = nextUnfinished(myColor, newFinished);
+    } else if (!extra){
+      newTurn = nextUnfinished(myColor, newFinished);
+      newSixes = 0;
+    }
+
+    const remaining = activeColors.filter(c => !newFinished.includes(c));
+    const isGameOver = remaining.length <= 1 && newFinished.length > 0;
+    const winner = isGameOver ? newFinished[0] : null;
+
+    if (captured > 0) SFX.capture();
+    else if (reachedHome) SFX.home();
+    else SFX.move();
+
+    await updateRoom({
+      'state/tokens': newTokens,
+      'state/turn': newTurn,
+      'state/dice': null,
+      'state/phase': 'roll',
+      'state/consecutiveSixes': extra ? newSixes : 0,
+      'state/finished': newFinished,
+      'state/gameOver': isGameOver,
+      'state/winner': winner,
+      'state/lastMove': { color: myColor, token: tokenIdx, from: currentRel, to: newRel, captured }
+    });
+  } catch(e){
+    dbg('move err: ' + (e && e.message ? e.message : e));
+    toast('Move failed');
+  }
+}
+
+function nextUnfinished(current, finished){
+  const order = activeColors;
+  const startIdx = order.indexOf(current);
+  for (let i=1; i<=order.length; i++){
+    const cand = order[(startIdx + i) % order.length];
+    if (!finished.includes(cand)) return cand;
+  }
+  return current;
+}
+
+/* =========================================================
+   RENDER PLAYER BARS
+   ========================================================= */
+function renderPlayerBars(){
+  const list = $('playerList');
+  const myBar = $('myBar');
+  if (!list || !myBar) return;
+
+  list.innerHTML = '';
+  myBar.innerHTML = '';
+
+  for (const c of activeColors){
+    const p = players[c];
+    const isMe = (c === myColor);
+    const isTurn = (state && state.turn === c);
+    const tokensHome = state ? normalizeTokens(state.tokens[c]).filter(r => r === 56).length : 0;
+
+    const card = document.createElement('div');
+    card.className = 'pcard' + (isTurn ? ' turn' : '');
+    card.innerHTML =
+      '<span class="pdot ' + c + '"></span>' +
+      '<span class="pname">' + ((p && p.name) ? escapeHtml(p.name.slice(0,14)) : '—') + '</span>' +
+      '<span class="pcount">' + tokensHome + '/4</span>' +
+      '<span class="statusTag ' + ((p && p.online) ? 'online' : 'offline') + '">' +
+        ((p && p.online) ? 'ON' : 'OFF') +
+      '</span>';
+
+    if (isMe) myBar.appendChild(card);
+    else list.appendChild(card);
+  }
+}
+
+/* =========================================================
+   RENDER DICE BAR
+   ========================================================= */
+function renderDiceBar(){
+  const label = $('turnLabel');
+  const box = $('diceBox');
+  const btn = $('rollBtn');
+  if (!label || !box || !btn) return;
+
+  if (!state){
+    label.textContent = 'Waiting…';
+    box.textContent = '🎲';
+    btn.disabled = true;
+    return;
+  }
+
+  const turn = state.turn;
+  const isMe = (turn === myColor);
+  const dice = state.dice;
+  const phase = state.phase;
+
+  label.textContent = isMe ? 'Your turn' : (COLOR_NAME[turn] + "'s turn");
+  label.classList.toggle('active', isMe);
+
+  if (dice){
+    box.textContent = String(dice);
+    box.classList.add('hot');
+  } else {
+    box.textContent = '🎲';
+    box.classList.remove('hot');
+  }
+
+  if (gameOver){
+    btn.disabled = true;
+    btn.textContent = 'Over';
+    return;
+  }
+  if (!isMe || phase !== 'roll'){
+    btn.disabled = true;
+    btn.textContent = phase === 'move' ? 'Pick' : 'Roll';
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Roll';
+  }
+}
+
+/* =========================================================
+   STATUS LINE
+   ========================================================= */
+function renderStatus(){
+  const el = $('statusLine');
+  if (!el) return;
+  el.classList.remove('dim');
+
+  if (gameOver && state){
+    const w = state.winner;
+    if (w === myColor) el.textContent = '🏆 You win!';
+    else el.textContent = COLOR_NAME[w] + ' wins';
+    return;
+  }
+  if (!state){ el.textContent = 'Waiting…'; return; }
+
+  const turn = state.turn;
+  const isMe = (turn === myColor);
+  if (isMe){
+    if (state.phase === 'roll') el.textContent = 'Tap Roll to roll the dice';
+    else if (state.phase === 'move') el.textContent = 'Tap a glowing token to move it';
+    else el.textContent = 'Your turn';
+  } else {
+    el.textContent = COLOR_NAME[turn] + ' is playing…';
+    el.classList.add('dim');
+  }
+}
+
+/* =========================================================
+   RESULT MODAL
+   ========================================================= */
+function showResult(){
+  const w = state.winner;
+  const d = $('overDialog');
+  d.innerHTML = '';
+
+  const g = document.createElement('div'); g.className = 'bigGlyph';
+  g.textContent = (w === myColor) ? '🏆' : '😔';
+  const res = document.createElement('div'); res.className = 'result';
+  res.textContent = (w === myColor) ? 'You win!' : (COLOR_NAME[w] + ' wins');
+  const why = document.createElement('div'); why.className = 'reason';
+  why.textContent = w === myColor ? 'All 4 tokens home!' : 'Better luck next time';
+
+  d.appendChild(g); d.appendChild(res); d.appendChild(why);
+
+  const actions = document.createElement('div'); actions.className = 'actions';
+  actions.style.display = 'flex'; actions.style.gap = '10px';
+
+  const newBtn = document.createElement('button');
+  newBtn.className = 'btn primary'; newBtn.style.flex = '1'; newBtn.textContent = 'New Game';
+  newBtn.onclick = async () => {
+    $('over').hidden = true;
+    await updateRoom({ state: initialState(activeColors) });
+  };
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'btn ghost'; closeBtn.style.flex = '1'; closeBtn.textContent = 'Close';
+  closeBtn.onclick = () => { $('over').hidden = true; };
+
+  actions.appendChild(newBtn); actions.appendChild(closeBtn);
+  d.appendChild(actions);
+
+  if (w === myColor) SFX.win();
+  else SFX.lose();
+
+  $('over').hidden = false;
+}
+
+/* =========================================================
+   CHAT
+   ========================================================= */
+function resetChatState(){
+  chatMessages = [];
+  chatOpen = false;
+  chatUnread = 0;
+  chatLastSeenTs = 0;
+  lastChatMsgId = '';
+  const ov = $('chat');
+  if (ov) ov.hidden = true;
+  updateChatBadge();
+}
+function attachChatListener(){
+  if (chatUnsub){ chatUnsub(); chatUnsub = null; }
+  if (!roomCode) return;
+  chatUnsub = onValue(ref(db, chatPath()), (snap) => {
+    const val = snap.val();
+    chatMessages = [];
+    if (val){
+      const arr = Object.keys(val).map(k => {
+        const m = val[k] || {};
+        return { id: k, from: m.from, name: m.name, text: m.text, ts: m.ts || 0 };
+      }).filter(m => typeof m.text === 'string');
+      arr.sort((a,b) => (a.ts||0) - (b.ts||0));
+      chatMessages = arr;
+    }
+    const newest = chatMessages[chatMessages.length-1];
+    if (newest && newest.id !== lastChatMsgId){
+      const had = !!lastChatMsgId;
+      lastChatMsgId = newest.id;
+      if (had && newest.from !== myColor && !chatOpen) SFX.notify();
+    }
+    if (chatOpen){
+      chatLastSeenTs = newest ? (newest.ts||0) : 0;
+      chatUnread = 0;
+    } else {
+      chatUnread = chatMessages.filter(m => m.from !== myColor && (m.ts||0) > chatLastSeenTs).length;
+    }
+    updateChatBadge();
+    renderChat();
+  });
+}
+function updateChatBadge(){
+  const b = $('chatBadge');
+  if (!b) return;
+  if (chatUnread > 0 && !chatOpen){
+    b.hidden = false;
+    b.textContent = chatUnread > 9 ? '9+' : String(chatUnread);
+  } else b.hidden = true;
+}
+function renderChat(){
+  const list = $('chatList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (chatMessages.length === 0){
+    const e = document.createElement('div');
+    e.className = 'chatEmpty';
+    e.textContent = 'No messages yet — say hi!';
+    list.appendChild(e);
+    return;
+  }
+  for (const m of chatMessages){
+    const mine = m.from === myColor;
+    const wrap = document.createElement('div');
+    wrap.className = 'chatMsg ' + (mine ? 'me' : 'them');
+    const who = document.createElement('div');
+    who.className = 'who ' + (mine ? 'me' : 'them');
+    who.textContent = String(m.name || (mine ? 'You' : 'Opponent')).slice(0,14);
+    const bub = document.createElement('div');
+    bub.className = 'bubble';
+    bub.textContent = String(m.text || '');
+    wrap.appendChild(who); wrap.appendChild(bub);
+    list.appendChild(wrap);
+  }
+  requestAnimationFrame(()=>{ list.scrollTop = list.scrollHeight; });
+}
+function openChat(){
+  chatOpen = true;
+  $('chat').hidden = false;
+  const newest = chatMessages[chatMessages.length-1];
+  chatLastSeenTs = newest ? (newest.ts||0) : 0;
+  chatUnread = 0;
+  updateChatBadge(); renderChat();
+  setTimeout(()=>{ const i=$('chatText'); if (i) i.focus(); }, 60);
+}
+function closeChat(){
+  chatOpen = false;
+  $('chat').hidden = true;
+  const newest = chatMessages[chatMessages.length-1];
+  chatLastSeenTs = newest ? (newest.ts||0) : 0;
+  updateChatBadge();
+}
+async function sendChat(){
+  const inp = $('chatText');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  try {
+    await push(ref(db, chatPath()), {
+      from: myColor, name: (myName||'').slice(0,14),
+      text: text.slice(0,200), ts: Date.now()
+    });
+  } catch(e){ toast('Message failed'); }
+  inp.focus();
+}
+
+/* =========================================================
+   VOICE
+   ========================================================= */
+function updateVoiceButtons(){
+  const mic = $('micBtn'), sp = $('speakerBtn');
+  if (mic){
+    mic.classList.toggle('on', micOn);
+    mic.classList.toggle('connecting', micRequesting);
+    mic.textContent = micOn ? '🎙️' : '🎤';
+  }
+  if (sp){
+    sp.classList.toggle('on', speakerOn);
+    sp.textContent = speakerOn ? '🔊' : '🔇';
+  }
+}
+function setupVoicePeer(){
+  if (voiceSetupDone) return;
+  if (!roomCode || !myColor) return;
+  if (!SimplePeer) return;
+  voiceSetupDone = true;
+
+  const isInitiator = (activeColors.indexOf(myColor) === 0);
+  const otherColor = activeColors.find(c => c !== myColor);
+  if (!otherColor) return;
+
+  if (voiceSignalUnsub){ try { voiceSignalUnsub(); } catch(e){} voiceSignalUnsub = null; }
+  voiceSignalUnsub = onChildAdded(ref(db, voiceSignalPath(otherColor)), (snap) => {
+    if (!voicePeer) return;
+    try { voicePeer.signal(snap.val()); }
+    catch(e){ dbg('sig err: ' + (e && e.message ? e.message : e)); }
+  });
+
+  try {
+    voicePeer = new SimplePeer({
+      initiator: isInitiator,
+      trickle: true,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
+  } catch(e){ voiceSetupDone = false; return; }
+
+  voicePeer.on('signal', async (data) => {
+    try { await push(ref(db, voiceSignalPath(myColor)), data); } catch(e){}
+  });
+  voicePeer.on('connect', () => {
+    voiceConnected = true;
+    if (localStream && voicePeer && !voiceStreamAdded){
+      try { voicePeer.addStream(localStream); voiceStreamAdded = true; } catch(e){}
+    }
+  });
+  voicePeer.on('stream', (stream) => {
+    const a = $('remoteAudio');
+    if (a){
+      a.srcObject = stream;
+      a.muted = !speakerOn;
+      a.play().catch(()=>{});
+    }
+  });
+  voicePeer.on('error', (err) => { dbg('voice err: ' + (err && err.message ? err.message : err)); });
+  voicePeer.on('close', () => { voiceConnected = false; voiceStreamAdded = false; });
+}
+function teardownVoicePeer(){
+  if (voicePeer){ try { voicePeer.destroy(); } catch(e){} voicePeer = null; }
+  if (voiceSignalUnsub){ try { voiceSignalUnsub(); } catch(e){} voiceSignalUnsub = null; }
+  voiceConnected = false; voiceStreamAdded = false;
+}
+function teardownVoice(){
+  teardownVoicePeer();
+  if (localStream){ try { localStream.getTracks().forEach(t => t.stop()); } catch(e){} localStream = null; }
+  micOn = false; micRequesting = false; voiceSetupDone = false;
+  updateVoiceButtons();
+}
+function resetVoiceState(){
+  teardownVoice();
+  speakerOn = true;
+  const a = $('remoteAudio');
+  if (a){ try { a.srcObject = null; } catch(e){} a.muted = false; }
+  updateVoiceButtons();
+}
+async function toggleMic(){
+  ensureAudio();
+  if (!roomCode || micRequesting) return;
+
+  if (!micOn){
+    micRequesting = true; updateVoiceButtons();
+    if (!voicePeer) setupVoicePeer();
+    if (!localStream){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        toast('Microphone not supported');
+        micRequesting = false; updateVoiceButtons(); return;
+      }
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+      } catch(e){
+        toast('Microphone permission denied');
+        micRequesting = false; updateVoiceButtons(); return;
+      }
+    }
+    if (voicePeer && !voiceStreamAdded){
+      try { voicePeer.addStream(localStream); voiceStreamAdded = true; } catch(e){}
+    }
+    try { localStream.getAudioTracks().forEach(t => { t.enabled = true; }); } catch(e){}
+    micOn = true; micRequesting = false; updateVoiceButtons();
+  } else {
+    if (localStream){ try { localStream.getAudioTracks().forEach(t => { t.enabled = false; }); } catch(e){} }
+    micOn = false; updateVoiceButtons();
+  }
+}
+function toggleSpeaker(){
+  speakerOn = !speakerOn;
+  const a = $('remoteAudio');
+  if (a){
+    a.muted = !speakerOn;
+    if (speakerOn) a.play().catch(()=>{});
+  }
+  updateVoiceButtons();
+}
+
+/* =========================================================
+   DIALOGS
+   ========================================================= */
+function showConfirm({title, body, confirmText, cancelText, danger, onConfirm, onCancel}){
+  const d = $('confirmDialog');
+  d.innerHTML = '';
+  const h = document.createElement('h3'); h.textContent = title; d.appendChild(h);
+  if (body){ const p = document.createElement('p'); p.textContent = body; d.appendChild(p); }
+  const actions = document.createElement('div'); actions.className = 'actions';
+  const cancel = document.createElement('button');
+  cancel.className = 'btn ghost'; cancel.style.flex = '1';
+  cancel.textContent = cancelText || 'Cancel';
+  cancel.onclick = () => { $('confirm').hidden = true; if (onCancel) onCancel(); };
+  const ok = document.createElement('button');
+  ok.className = 'btn ' + (danger ? 'danger' : 'primary'); ok.style.flex = '1';
+  ok.textContent = confirmText || 'OK';
+  ok.onclick = () => { $('confirm').hidden = true; if (onConfirm) onConfirm(); };
+  actions.appendChild(cancel); actions.appendChild(ok);
+  d.appendChild(actions);
+  $('confirm').hidden = false;
+}
+$('confirm').addEventListener('click', e => { if (e.target === $('confirm')) $('confirm').hidden = true; });
+
+function openSheet(){
+  const d = $('sheetDialog');
+  d.innerHTML = '';
+  const mk = (ic, label, fn, danger) => {
+    const b = document.createElement('button');
+    b.className = 'sheetBtn' + (danger ? ' danger' : '');
+    b.innerHTML = '<span class="ic">' + ic + '</span><span>' + label + '</span>';
+    b.onclick = () => { $('sheet').hidden = true; fn(); };
+    d.appendChild(b);
+  };
+  mk(micOn ? '🎙️' : '🎤', micOn ? 'Mic: ON' : 'Mic: OFF', toggleMic);
+  mk(speakerOn ? '🔊' : '🔇', speakerOn ? 'Speaker: ON' : 'Speaker: OFF', toggleSpeaker);
+  mk('💬','Chat', openChat);
+  mk('🔄','Reset Game', askReset, true);
+  mk('🚪','Leave Room', askLeave, true);
+  mk('✖','Close', ()=>{});
+  $('sheet').hidden = false;
+}
+$('menuBtn').onclick = openSheet;
+$('sheet').addEventListener('click', e => { if (e.target === $('sheet')) $('sheet').hidden = true; });
+
+function askReset(){
+  showConfirm({
+    title:'Reset game?',
+    body:'All tokens return to start. Continue with same players.',
+    confirmText:'Reset', cancelText:'Cancel', danger:true,
+    onConfirm: async () => { await updateRoom({ state: initialState(activeColors) }); }
+  });
+}
+function askLeave(){
+  showConfirm({
+    title:'Leave this room?',
+    body:'You can rejoin later with the same code.',
+    confirmText:'Leave', cancelText:'Stay', danger:true,
+    onConfirm: () => leaveToMenu()
+  });
+}
+
+/* =========================================================
+   SESSION
+   ========================================================= */
+function saveSession(){
+  try {
+    localStorage.setItem('ludo_session', JSON.stringify({ code: roomCode, color: myColor, name: myName }));
+  } catch(e){}
+}
+function clearSession(){
+  try { localStorage.removeItem('ludo_session'); } catch(e){}
+}
+function getSavedSession(){
+  try {
+    const raw = localStorage.getItem('ludo_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch(e){ return null; }
+}
+async function tryAutoResume(){
+  const saved = getSavedSession();
+  if (!saved || !saved.code) return false;
+
+  const snap = await get(ref(db, `ludo_game/rooms/${saved.code}`));
+  if (!snap.exists()){ clearSession(); return false; }
+  const room = snap.val();
+  const players = room.players || {};
+  const mySlot = players[saved.color];
+
+  if (mySlot && mySlot.online && mySlot.name !== saved.name){ clearSession(); return false; }
+
+  roomCode = saved.code;
+  myColor = saved.color || 'r';
+  myName = saved.name || 'Player';
+  $('nameInput').value = myName;
+
+  try {
+    await update(ref(db, roomPath()), {
+      [`players/${myColor}`]: { name: myName, online: true, lastSeen: Date.now() }
+    });
+  } catch(e){}
+
+  setupConnectivity();
+  attachRoomListener();
+  attachChatListener();
+  return true;
+}
+
+/* =========================================================
+   LEAVE ROOM
+   ========================================================= */
+async function leaveToMenu(){
+  try { teardownVoice(); } catch(e){}
+  if (chatUnsub){ try { chatUnsub(); } catch(e){} chatUnsub = null; }
+  if (roomUnsub){ roomUnsub(); roomUnsub = null; }
+  if (connectedUnsub){ connectedUnsub(); connectedUnsub = null; }
+
+  const currentCode = roomCode;
+  const currentColor = myColor;
+
+  if (currentCode){
+    try {
+      const room = await readRoom();
+      const players = (room && room.players) || {};
+      const others = Object.keys(players).filter(c => c !== currentColor && players[c] && players[c].online);
+      if (others.length === 0){
+        await remove(ref(db, `ludo_game/rooms/${currentCode}`));
+      } else {
+        await update(ref(db, `ludo_game/rooms/${currentCode}/players/${currentColor}`), { online: false, lastSeen: Date.now() });
+      }
+    } catch(e){}
+  }
+
+  roomCode = '';
+  myColor = '';
+  hasEnteredGame = false;
+  lastRoomSnapshot = null;
+  clearSession();
+  resetChatState();
+  resetVoiceState();
+
+  $('game').hidden = true;
+  $('menu').hidden = false;
+  $('roomBox').hidden = true;
+  $('playActions').hidden = false;
+  $('nameInput').disabled = false;
+  $('hostStatus').textContent = 'Waiting for players…';
+  $('hostStatus').className = 'status';
+  setMenuStatus('');
+  history.replaceState(null, '', location.pathname);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+$('createBtn').onclick = () => { ensureAudio(); createRoom(); };
+$('joinBtn').onclick = () => {
+  ensureAudio();
+  const code = $('codeInput').value.trim().toUpperCase();
+  if (code.length !== 4){ setMenuStatus('Enter the 4-character code.', 'err'); return; }
+  setMenuStatus('');
+  joinRoom(code);
+};
+$('codeInput').addEventListener('input', () => {
+  $('codeInput').value = $('codeInput').value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+});
+$('nameInput').addEventListener('input', () => {
+  try {
+    const s = getSavedSession() || {};
+    s.name = $('nameInput').value.slice(0,14);
+    localStorage.setItem('ludo_session', JSON.stringify(s));
+  } catch(e){}
+});
+document.querySelectorAll('.countBtn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.countBtn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    chosenCount = parseInt(btn.dataset.count, 10);
+  };
+});
+$('shareBtn').onclick = async () => {
+  const code = $('roomCode').textContent.trim();
+  const url = location.origin + location.pathname + '?code=' + code;
+  const text = 'Play Ludo with me! Code: ' + code;
+  if (navigator.share){
+    try { await navigator.share({title:'Ludo', text, url}); return; } catch(e){}
+  }
+  try {
+    await navigator.clipboard.writeText(text + '\n' + url);
+    $('hostStatus').textContent = 'Link copied!';
+    $('hostStatus').className = 'status ok';
+  } catch(e){ $('hostStatus').textContent = url; }
+};
+$('cancelRoomBtn').onclick = () => {
+  showConfirm({
+    title:'Cancel room?',
+    body:'Nobody else will be able to join.',
+    confirmText:'Cancel Room', cancelText:'Keep Waiting', danger:true,
+    onConfirm: async () => {
+      try { if (roomCode) await remove(ref(db, roomPath())); } catch(e){}
+      leaveToMenu();
+    }
+  });
+};
+$('rollBtn').onclick = () => { ensureAudio(); rollDice(); };
+$('micBtn').onclick = () => { ensureAudio(); toggleMic(); };
+$('speakerBtn').onclick = () => { ensureAudio(); toggleSpeaker(); };
+$('chatBtn').onclick = openChat;
+$('chatClose').onclick = closeChat;
+$('chatSend').onclick = sendChat;
+$('chatText').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendChat(); }
+});
+$('chat').addEventListener('click', e => { if (e.target === $('chat')) closeChat(); });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  if (roomCode && myColor){
+    update(ref(db, myPresencePath()), { online: true, lastSeen: Date.now() }).catch(()=>{});
+  }
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+(async function init(){
+  updateVoiceButtons();
+
+  const saved = getSavedSession();
+  if (saved && saved.name) $('nameInput').value = saved.name;
+
+  const params = new URLSearchParams(location.search);
+  const urlCode = (params.get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+  if (urlCode.length === 4){
+    $('codeInput').value = urlCode;
+    setMenuStatus('Code detected — tap Join.');
+  }
+
+  if (saved && saved.code){
+    const btn = $('resumeBtn');
+    btn.hidden = false;
+    btn.textContent = 'Resume last game (' + saved.code + ')';
+    btn.onclick = async () => {
+      btn.hidden = true;
+      setMenuStatus('Resuming…');
+      const ok = await tryAutoResume();
+      if (!ok) setMenuStatus('That game is no longer available.', 'err');
+    };
+  }
+
+  // Keep tokens aligned when the viewport resizes / rotates
+  window.addEventListener('resize', () => {
+    if (state && hasEnteredGame) renderTokens();
+  });
+  window.addEventListener('orientationchange', () => {
+    if (state && hasEnteredGame) setTimeout(renderTokens, 250);
+  });
+})();
+</script>
+</body>
+</html>

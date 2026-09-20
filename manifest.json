@@ -4,7 +4,7 @@
   "description": "Play Ludo Game Online",
   "start_url": "/Ludo/",
   "scope": "/Ludo/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#ffffff",
   "theme_color": "#14130f",
   "icons": [

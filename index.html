@@ -2403,7 +2403,7 @@ async function sendReaction(kind, value){
 
 function updateVoiceButtons(){
   const mic = $('micBtn'), sp = $('speakerBtn');
-  if (mic){ mic.classList.toggle('on', micOn); mic.classList.toggle('connecting', micRequesting); mic.textContent = micOn ? '🎙️' : '🎤'; }
+  if (mic){ mic.classList.toggle('on', micOn); mic.classList.toggle('connecting', micRequesting); mic.textContent = micOn ? '🎙️' : '🔇'; }
   if (sp){ sp.classList.toggle('on', speakerOn); sp.textContent = speakerOn ? '🔊' : '🔇'; }
 }
 function ensureAudioElements(){
